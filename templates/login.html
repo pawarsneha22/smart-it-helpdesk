@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% import "icons.html" as i %}
+{% block title %}Sign in · Smart IT Helpdesk{% endblock %}
+{% block content %}
+<div class="auth-layout">
+  <section class="auth-brand-panel"><a class="auth-brand" href="{{ url_for('login') }}"><span class="brand-mark">H</span><strong>helpdesk<span>.</span></strong></a><div class="auth-brand-message"><span class="eyebrow"><span class="eyebrow-mark">{{ i.icon('spark',14) }}</span> SUPPORT, SIMPLIFIED</span><h1>Good work starts with great support.</h1><p>A clear place to raise issues, follow progress, and get back to what matters.</p><div class="auth-feature-list"><div class="auth-feature">{{ i.icon('check',16) }} Track every request from one workspace</div><div class="auth-feature">{{ i.icon('check',16) }} Get updates from your support team</div><div class="auth-feature">{{ i.icon('check',16) }} Keep troubleshooting in one place</div></div></div><div class="auth-footnote">SMART IT HELPDESK · SUPPORT OPERATIONS</div></section>
+  <section class="auth-form-panel"><h2>Welcome back</h2><p>Sign in to raise or resolve support tickets.</p>
+    <form method="post" class="auth-form" novalidate><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div><label class="form-label" for="email">Work email</label><input type="email" class="form-control" id="email" name="email" placeholder="you@company.com" value="{{ request.form.get('email','') }}" autocomplete="username" required></div><div><label class="form-label" for="password">Password</label><input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required></div><button type="submit" class="btn btn-primary">Sign in {{ i.icon('chevron',15) }}</button></form>
+    <div class="auth-switch">New employee? <a href="{{ url_for('register') }}">Create an account</a></div>
+    <div class="demo-access"><strong>Demo access</strong>Engineer · anita@techcorp.com / Engineer@123<br>Employee · rahul@techcorp.com / Employee@123</div>
+  </section>
+</div>
+{% endblock %}

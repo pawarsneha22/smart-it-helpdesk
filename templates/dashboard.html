@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% import "icons.html" as i %}
+{% block content %}
+{% if current_user().is_admin() %}
+<section class="welcome-banner admin-banner"><div class="welcome-copy"><span class="eyebrow"><span class="eyebrow-mark">{{ i.icon('spark',14) }}</span> ADMINISTRATOR OVERVIEW</span><h2>Welcome back, {{ current_user().name.split(' ')[0] }}.</h2><p>Monitor support operations, ticket activity, and team access from one place.</p></div><div class="admin-banner-actions"><a class="btn btn-white" href="{{ url_for('new_ticket') }}">{{ i.icon('plus',16) }} Create ticket</a><div class="admin-secondary-actions"><a class="admin-text-link" href="{{ url_for('reports') }}">View reports {{ i.icon('chevron',14) }}</a><a class="admin-text-link" href="{{ url_for('users_directory') }}">Manage team {{ i.icon('chevron',14) }}</a></div></div></section>
+<section class="metric-grid employee-metrics" aria-label="System ticket statistics">
+  {% set admin_metrics = [('All tickets',stats.total,'All requests in the system','ticket','metric-blue',''),('Open',stats.open,'Awaiting triage','clock','metric-violet','Open'),('In progress',stats.in_progress,'Being worked on','spark','metric-green','In Progress'),('Resolved',stats.resolved,'Successfully resolved','check','metric-ink','Resolved')] %}
+  {% for label,value,note,icon_name,tone,status_value in admin_metrics %}<a class="metric-card {{ tone }}" href="{{ url_for('list_tickets', status=status_value) }}"><span class="metric-icon">{{ i.icon(icon_name,19) }}</span><span class="metric-label">{{ label }}</span><strong class="metric-number">{{ value }}</strong><span class="metric-note">{{ note }}</span>{{ i.icon('chevron',15) }}</a>{% endfor %}
+</section>
+<div class="dashboard-grid admin-grid">
+  <section class="panel"><div class="panel-heading"><div><span class="section-kicker">SYSTEM-WIDE</span><h3>Recent tickets</h3><p>Latest requests across all departments</p></div><a class="text-link" href="{{ url_for('list_tickets') }}">All tickets {{ i.icon('chevron',14) }}</a></div><div class="table-scroll"><table class="premium-table"><thead><tr><th>Ticket</th><th>Subject</th><th>Requester</th><th>Priority</th><th>Status</th></tr></thead><tbody>{% for t in recent %}<tr><td><a class="table-ticket-id" href="{{ url_for('ticket_detail', ticket_number=t.ticket_number) }}">{{ t.ticket_number }}</a></td><td><a class="table-subject" href="{{ url_for('ticket_detail', ticket_number=t.ticket_number) }}">{{ t.title }}</a></td><td><span class="person-copy"><strong>{{ t.reported_by.name }}</strong><small>{{ t.reported_by.department }}</small></span></td><td>{{ m.priority_badge(t.priority) }}</td><td>{{ m.status_badge(t.status) }}</td></tr>{% else %}<tr><td colspan="5"><div class="empty-state"><strong>No tickets yet</strong><p>Tickets will appear here when employees submit requests.</p></div></td></tr>{% endfor %}</tbody></table></div></section>
+  <section class="panel"><div class="panel-heading"><div><span class="section-kicker">CURRENT DISTRIBUTION</span><h3>Tickets by status</h3><p>Counts from all stored ticket records</p></div></div><div class="priority-summary">{% set max_status = tickets_by_status.values()|max if tickets_by_status.values() else 0 %}{% for status in ['Open','Assigned','In Progress','Resolved','Closed'] %}{% set count = tickets_by_status.get(status,0) %}{% set width = (count / max_status * 100)|round|int if max_status else 0 %}<div class="priority-line"><div class="priority-line-top"><span class="priority-name">{{ m.status_badge(status) }}</span><strong>{{ count }}</strong></div><div class="priority-track"><span class="priority-fill fill-{{ status|lower|replace(' ','-') }}" style="width:{{ width }}%"></span></div></div>{% endfor %}</div></section>
+  <section class="panel"><div class="panel-heading"><div><span class="section-kicker">AUDIT TRAIL</span><h3>Recent activity</h3><p>Latest recorded ticket updates</p></div><a class="text-link" href="{{ url_for('reports') }}">Full report {{ i.icon('chevron',14) }}</a></div><div class="latest-list">{% for activity in recent_activity %}<div class="latest-activity"><span class="activity-avatar">{{ activity.user.name[:1]|upper }}</span><span class="latest-copy"><strong>{{ activity.user.name }} · {{ activity.action }}</strong><small><a href="{{ url_for('ticket_detail', ticket_number=activity.ticket.ticket_number) }}">{{ activity.ticket.ticket_number }}</a>{% if activity.details %}<span>·</span> {{ activity.details[:54] }}{% endif %}</small></span><time>{{ activity.timestamp|dt }}</time></div>{% else %}<div class="empty-inline">No recorded activity yet.</div>{% endfor %}</div></section>
+  <section class="panel admin-team-panel"><div class="panel-heading"><div><span class="section-kicker">WORKFORCE</span><h3>Team overview</h3><p>Current role counts</p></div><a class="text-link" href="{{ url_for('users_directory') }}">Manage users {{ i.icon('chevron',14) }}</a></div><div class="team-counts"><div><span class="team-count-icon team-employees">{{ i.icon('users',17) }}</span><span><strong>{{ stats.employees }}</strong><small>Employees</small></span></div><div><span class="team-count-icon team-engineers">{{ i.icon('users',17) }}</span><span><strong>{{ stats.engineers }}</strong><small>IT Engineers</small></span></div></div><a href="{{ url_for('reports') }}" class="team-report-link">View system reports {{ i.icon('chevron',14) }}</a></section>
+</div>
+{% elif current_user().is_engineer() %}
+<section class="welcome-banner engineer-banner">
+  <div class="welcome-copy"><span class="eyebrow"><span class="eyebrow-mark">{{ i.icon('spark',14) }}</span> Engineer Command Center</span><h2>Good to see you, {{ current_user().name.split(' ')[0] }}.</h2><p>Your team’s queue is ready. Here’s what needs your attention today.</p></div>
+  <a class="btn btn-white" href="{{ url_for('new_ticket') }}">{{ i.icon('plus',17) }} Create ticket</a>
+</section>
+<section class="metric-grid" aria-label="Support queue summary">
+  {% set metric_data = [
+    ('Open queue', stats.open_unassigned, 'Waiting for assignment', 'ticket', 'metric-blue', url_for('list_tickets', scope='unassigned')),
+    ('Assigned to me', stats.assigned_to_me, 'Active in your queue', 'clock', 'metric-violet', url_for('list_tickets', scope='mine')),
+    ('Resolved by me', stats.my_resolved, 'Resolved tickets', 'check', 'metric-green', url_for('list_tickets', scope='mine', status='Resolved')),
+    ('Critical active', stats.critical_open, 'Needs priority attention', 'alert', 'metric-red', url_for('list_tickets', priority='Critical')),
+    ('Total active', stats.total_open, 'Across all queues', 'grid', 'metric-ink', url_for('list_tickets'))
+  ] %}
+  {% for label, value, note, icon_name, tone, link in metric_data %}
+  <a class="metric-card {{ tone }}" href="{{ link }}"><span class="metric-icon">{{ i.icon(icon_name,19) }}</span><span class="metric-label">{{ label }}</span><strong class="metric-number">{{ value }}</strong><span class="metric-note">{{ note }}</span>{{ i.icon('chevron',15) }}</a>
+  {% endfor %}
+</section>
+<div class="dashboard-grid engineer-grid">
+  <section class="panel queue-panel">
+    <div class="panel-heading"><div><span class="section-kicker">NEEDS ATTENTION</span><h3>Unassigned queue</h3><p>Prioritized tickets waiting for an owner</p></div><a class="text-link" href="{{ url_for('list_tickets', scope='unassigned') }}">View queue {{ i.icon('chevron',14) }}</a></div>
+    <div class="queue-list">
+      {% for t in unassigned %}
+      <a class="queue-row" href="{{ url_for('ticket_detail', ticket_number=t.ticket_number) }}"><span class="priority-rail priority-{{ t.priority|lower }}"></span><span class="queue-main"><span class="ticket-reference">{{ t.ticket_number }}</span><strong>{{ t.title }}</strong><small>{{ t.reported_by.name }} <span>·</span> {{ t.category }}</small></span><span class="queue-side">{{ m.priority_badge(t.priority) }}<small>{{ t.created_at|dt }}</small></span>{{ i.icon('chevron',15) }}</a>
+      {% else %}<div class="empty-state"><span class="empty-icon">{{ i.icon('check',22) }}</span><strong>Queue is clear</strong><p>No open tickets are waiting for assignment.</p><a href="{{ url_for('list_tickets') }}">Browse all tickets</a></div>{% endfor %}
+    </div>
+  </section>
+  <section class="panel priority-panel">
+    <div class="panel-heading"><div><span class="section-kicker">LIVE WORKLOAD</span><h3>Active by priority</h3><p>Open and in-progress tickets</p></div></div>
+    {% set priority_groups = tickets_by_priority %}{% set max_c = priority_groups.values()|max if priority_groups.values() else 0 %}
+    <div class="priority-summary">
+      {% for p in ['Critical', 'High', 'Medium', 'Low'] %}{% set count = priority_groups.get(p, 0) %}{% set width = (count / max_c * 100)|round|int if max_c else 0 %}
+      <div class="priority-line"><div class="priority-line-top"><span class="priority-name"><span class="priority-dot dot-{{ p|lower }}"></span>{{ p }}</span><strong>{{ count }}</strong></div><div class="priority-track"><span class="priority-fill fill-{{ p|lower }}" style="width:{{ width }}%"></span></div></div>{% endfor %}
+    </div>
+    <a class="priority-footer" href="{{ url_for('list_tickets') }}">Review all active tickets {{ i.icon('chevron',14) }}</a>
+  </section>
+  <section class="panel assigned-panel">
+    <div class="panel-heading"><div><span class="section-kicker">YOUR WORK</span><h3>Assigned to you</h3><p>Your highest priority active tickets</p></div><a class="text-link" href="{{ url_for('list_tickets', scope='mine') }}">View all {{ i.icon('chevron',14) }}</a></div>
+    {% for t in my_tickets %}<a class="assigned-row" href="{{ url_for('ticket_detail', ticket_number=t.ticket_number) }}"><span class="assigned-avatar">{{ t.reported_by.name[:1]|upper }}</span><span class="assigned-info"><strong>{{ t.title }}</strong><small>{{ t.ticket_number }} <span>·</span> {{ t.category }}</small></span>{{ m.status_badge(t.status) }}{{ m.priority_badge(t.priority) }}</a>
+    {% else %}<div class="empty-inline">No active tickets are assigned to you yet.</div>{% endfor %}
+  </section>
+  <section class="panel latest-panel">
+    <div class="panel-heading"><div><span class="section-kicker">RECENT ACTIVITY</span><h3>Recently opened</h3><p>Latest tickets across the helpdesk</p></div></div>
+    <div class="latest-list">{% for t in recent %}<a href="{{ url_for('ticket_detail', ticket_number=t.ticket_number) }}"><span class="latest-indicator indicator-{{ t.status|lower|replace(' ', '-') }}"></span><span class="latest-copy"><strong>{{ t.title }}</strong><small>{{ t.ticket_number }} <span>·</span> {{ t.reported_by.name }}</small></span>{{ m.status_badge(t.status) }}</a>{% else %}<div class="empty-inline">Tickets will appear here when they’re created.</div>{% endfor %}</div>
+  </section>
+</div>
+{% else %}
+<section class="welcome-banner employee-banner">
+  <div class="welcome-copy"><span class="eyebrow"><span class="eyebrow-mark">{{ i.icon('spark',14) }}</span> YOUR SUPPORT DESK</span><h2>Welcome back, {{ current_user().name.split(' ')[0] }}.</h2><p>Track your requests or let the IT team know what you need.</p></div>
+  <a class="btn btn-white" href="{{ url_for('new_ticket') }}">{{ i.icon('plus',17) }} Create a ticket</a>
+</section>
+<section class="metric-grid employee-metrics" aria-label="Your ticket summary">
+  {% set metric_data = [
+    ('Open', stats.my_open, 'Waiting for support', 'ticket', 'metric-blue', 'Open'),
+    ('In progress', stats.my_in_progress, 'Being worked on', 'clock', 'metric-violet', 'In Progress'),
+    ('Resolved', stats.my_resolved, 'Completed by support', 'check', 'metric-green', 'Resolved'),
+    ('Total requests', stats.my_total, 'All tickets you have raised', 'grid', 'metric-ink', '')
+  ] %}
+  {% for label, value, note, icon_name, tone, status_value in metric_data %}
+  <a class="metric-card {{ tone }}" href="{{ url_for('list_tickets', status=status_value) if status_value else url_for('list_tickets') }}"><span class="metric-icon">{{ i.icon(icon_name,19) }}</span><span class="metric-label">{{ label }}</span><strong class="metric-number">{{ value }}</strong><span class="metric-note">{{ note }}</span>{{ i.icon('chevron',15) }}</a>
+  {% endfor %}
+</section>
+<section class="panel employee-tickets">
+  <div class="panel-heading"><div><span class="section-kicker">REQUEST HISTORY</span><h3>Your recent tickets</h3><p>A clear view of updates and ownership</p></div><a class="text-link" href="{{ url_for('list_tickets') }}">All tickets {{ i.icon('chevron',14) }}</a></div>
+  <div class="table-scroll"><table class="premium-table"><thead><tr><th>Ticket</th><th>Subject</th><th>Category</th><th>Priority</th><th>Status</th><th>Created</th></tr></thead><tbody>
+  {% for t in my_tickets %}<tr><td><a class="table-ticket-id" href="{{ url_for('ticket_detail', ticket_number=t.ticket_number) }}">{{ t.ticket_number }}</a></td><td><a class="table-subject" href="{{ url_for('ticket_detail', ticket_number=t.ticket_number) }}">{{ t.title }}</a></td><td>{{ m.category_badge(t.category) }}</td><td>{{ m.priority_badge(t.priority) }}</td><td>{{ m.status_badge(t.status) }}</td><td class="table-date">{{ t.created_at|dt }}</td></tr>
+  {% else %}<tr><td colspan="6"><div class="empty-state"><span class="empty-icon">{{ i.icon('ticket',22) }}</span><strong>No tickets yet</strong><p>Your support requests and updates will show up here.</p><a class="btn btn-primary" href="{{ url_for('new_ticket') }}">Create your first ticket</a></div></td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+{% endblock %}

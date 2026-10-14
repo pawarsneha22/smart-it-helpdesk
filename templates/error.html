@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% import "icons.html" as i %}
+{% block content %}
+<section class="error-panel"><div class="error-orbit"><span>{{ i.icon('alert',25) }}</span></div><span class="error-kicker">REQUEST INTERRUPTED · {{ code }}</span><h2>{{ title }}</h2><p>{{ message }}</p><a class="btn btn-primary" href="{{ url_for('dashboard') if current_user() else url_for('login') }}">{{ i.icon('grid',15) }} {{ 'Return to overview' if current_user() else 'Go to sign in' }}</a></section>
+{% endblock %}

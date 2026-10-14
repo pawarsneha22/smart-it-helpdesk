@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment / secrets
+.env
+.env.*
+*.secret
+
+# Flask / database
+instance/
+*.db
+*.sqlite
+*.sqlite3
+flask_session/
+
+# Test / coverage reports
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+pytest-temp/

@@ -1,0 +1,23 @@
+{% macro status_badge(status) -%}
+<span class="badge rounded-pill status-badge st-{{ status.lower()|replace(' ', '-') }}">{{ status }}</span>
+{%- endmacro %}
+
+{% macro priority_badge(priority) -%}
+<span class="badge rounded-pill priority-badge pr-{{ priority.lower() }}">{{ priority }}</span>
+{%- endmacro %}
+
+{% macro category_badge(category) -%}
+<span class="badge rounded-pill category-badge">{{ category }}</span>
+{%- endmacro %}
+
+{% macro sla_hint(ticket) -%}
+{# SLA indicator based on Config.SLA_HOURS (hours allowed per priority). #}
+{%- set hours = {'Low': 24, 'Medium': 8, 'High': 4, 'Critical': 1}.get(ticket.priority, 24) -%}
+{%- if ticket.status == 'Closed' -%}
+  <small class="text-muted">closed</small>
+{%- elif ticket.status == 'Resolved' -%}
+  <small class="text-success">resolved in {{ ticket.resolution_time_seconds()|duration }}</small>
+{%- else -%}
+  <small class="text-muted">SLA: {{ hours }}h</small>
+{%- endif -%}
+{%- endmacro %}

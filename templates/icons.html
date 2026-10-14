@@ -1,0 +1,17 @@
+{% macro icon(name, size=18) -%}
+<svg class="icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+{% if name == 'grid' %}<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+{% elif name == 'ticket' %}<path d="M4 7.5A2.5 2.5 0 0 0 4 12.5v4A1.5 1.5 0 0 0 5.5 18h13a1.5 1.5 0 0 0 1.5-1.5v-4a2.5 2.5 0 0 0 0-5v-1A1.5 1.5 0 0 0 18.5 5h-13A1.5 1.5 0 0 0 4 6.5z"/><path d="M14 8v1m0 3v1m0 3v.1"/>
+{% elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
+{% elif name == 'users' %}<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+{% elif name == 'search' %}<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>
+{% elif name == 'bell' %}<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/>
+{% elif name == 'chevron' %}<path d="m9 18 6-6-6-6"/>
+{% elif name == 'logout' %}<path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/>
+{% elif name == 'clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+{% elif name == 'check' %}<path d="m5 12 4 4L19 6"/>
+{% elif name == 'alert' %}<path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.1l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/>
+{% elif name == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>
+{% elif name == 'spark' %}<path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-2-5.8L4 11l6-2.2L12 3Z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1L19 14Z"/>
+{% endif %}</svg>
+{%- endmacro %}
